@@ -20,7 +20,7 @@ simulate.addEventListener('click', ()=> {
     if(floorInputValue=="" || liftInputValue==""){
         alert('please enter the value')
     }
-    
+
     else if(floorInputValue>=8){
         alert('please enter max 7 floor')
 
