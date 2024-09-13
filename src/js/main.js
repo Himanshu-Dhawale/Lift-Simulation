@@ -20,10 +20,9 @@ simulate.addEventListener('click', ()=> {
     if(floorInputValue=="" || liftInputValue==""){
         alert('please enter the value')
     }
-
-    else if(floorInputValue>=8){
-        alert('please enter max 7 floor')
-
+    
+    else if(floorInputValue < 0 || liftInputValue < 0){
+        alert("Inputs can't be negative")
     }
     
     else if (window.innerWidth <= 500 && +liftInputValue > 4) {
@@ -91,9 +90,15 @@ function makingFloors() {
         button2.className = "down";
         button2.setAttribute('id', `down${i}`);
         button2.appendChild(text2);
+        if(i == 1){
+            buttondiv1.appendChild(button2)
+        }else if(i == floorInput){
+            buttondiv1.appendChild(button1)
+        }else{
+            buttondiv1.appendChild(button1);
+            buttondiv1.appendChild(button2);
+        }
 
-        buttondiv1.appendChild(button1);
-        buttondiv1.appendChild(button2);
 
         buttonLift.appendChild(buttondiv1);
 
@@ -170,25 +175,39 @@ function makingFloors() {
         oldFloorValueArray.push(1)
     }
 
+    // up.forEach((e, i) => {
+    //     e.addEventListener('click', () => {
+
+    //         let floorValue = nUp - i;
+    //         for (let i = 0; i < selectAllLift.length; i++) {
+                
+    //             if (selectAllLift[i].getAttribute('flag') === 'free') {
+                    
+    //                 selectAllLift[i].setAttribute('flag', 'busy');
+
+    //                 moveLift(selectAllLift[i], floorValue,oldFloorValueArray[i]);
+    //                 oldFloorValueArray[i]=floorValue;
+
+    //                 break;
+    //             }
+    //         }
+    //     })
+    // })
+
     up.forEach((e, i) => {
         e.addEventListener('click', () => {
-
             let floorValue = nUp - i;
             for (let i = 0; i < selectAllLift.length; i++) {
-                
                 if (selectAllLift[i].getAttribute('flag') === 'free') {
-                    
                     selectAllLift[i].setAttribute('flag', 'busy');
-
-                    moveLift(selectAllLift[i], floorValue,oldFloorValueArray[i]);
-                    oldFloorValueArray[i]=floorValue;
-
+                    moveLift(selectAllLift[i], floorValue, oldFloorValueArray[i]);
+                    oldFloorValueArray[i] = floorValue;
                     break;
                 }
             }
         })
     })
-
+    
 
     down.forEach((e, i) => {
         e.addEventListener('click', () => {
@@ -208,24 +227,44 @@ function makingFloors() {
 }
 
 
-function moveLift(liftno, floorNo,oldFloorValue) {
 
-    liftno.style.transform = `translateY(${-95 * (floorNo - 1)}px)`;
 
-    let prev= `${2 * Math.abs(floorNo - oldFloorValue)}s`
-    liftno.style.transitionDuration = prev;
+// function moveLift(liftno, floorNo,oldFloorValue) {
 
+//     liftno.style.transform = `translateY(${-95 * (floorNo - 1)}px)`;
+
+//     let prev= `${2 * Math.abs(floorNo - oldFloorValue)}s`
+//     liftno.style.transitionDuration = prev;
+
+
+//     setTimeout(() => {
+
+//         gateopenclose(liftno);
+//         setTimeout(() =>{
+//             liftno.setAttribute('flag', 'free')
+//         },5500);
+//         console.log(liftno.getAttribute('flag'))
+//     }, 2 * Math.abs(floorNo - oldFloorValue) * 1000)
+
+// } 
+
+function moveLift(liftno, floorNo, oldFloorValue) {
+    // Adjust the translation calculation
+    let translation = -95 * (floorNo - 1);
+    liftno.style.transform = `translateY(${translation}px)`;
+
+    let travelTime = `${2 * Math.abs(floorNo - oldFloorValue)}s`;
+    liftno.style.transitionDuration = travelTime;
 
     setTimeout(() => {
-
         gateopenclose(liftno);
-        setTimeout(() =>{
-            liftno.setAttribute('flag', 'free')
-        },5500);
-        console.log(liftno.getAttribute('flag'))
-    }, 2 * Math.abs(floorNo - oldFloorValue) * 1000)
+        setTimeout(() => {
+            liftno.setAttribute('flag', 'free');
+        }, 5500);
+    }, 2 * Math.abs(floorNo - oldFloorValue) * 1000);
+}
 
-} 
+
 
 function gateopenclose(liftno) {
     let gates=liftno.firstChild; 
