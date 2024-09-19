@@ -1,6 +1,7 @@
+sessionStorage.clear();
+
 let simulate = document.querySelector('.createLiftFloorButton');
 let restart = document.querySelector('.goToFirstPage');
-
 restart.addEventListener('click', hideSecondPage);
 
 simulate.addEventListener('click', () => {
@@ -11,17 +12,9 @@ simulate.addEventListener('click', () => {
         alert('Please enter the value');
     } else if (floorInputValue < 0 || liftInputValue < 0) {
         alert("Inputs can't be negative");
-    } else if (window.innerWidth <= 500 && +liftInputValue > 4) {
-        alert("This screen size can't have more than 4 lifts");
-    } else if (window.innerWidth > 500 && window.innerWidth <= 768 && +liftInputValue > 5) {
-        alert("This screen size can't have more than 5 lifts");
-    } else if (window.innerWidth > 500 && window.innerWidth <= 1024 && +liftInputValue > 7) {
-        alert("This screen size can't have more than 7 lifts");
-    } else if (window.innerWidth > 500 && window.innerWidth <= 1440 && +liftInputValue > 11) {
-        alert("This screen size can't have more than 11 lifts");
-    } else if (window.innerWidth > 500 && window.innerWidth <= 2560 && +liftInputValue > 20) {
-        alert("This screen size can't have more than 20 lifts");
     } else {
+        sessionStorage.setItem("floors", floorInputValue);
+        sessionStorage.setItem("lifts", liftInputValue);
         document.querySelector('.firstPage').style.display = 'none';
         document.querySelector('.secondPage').style.display = 'block';
         makingFloors();
@@ -35,14 +28,9 @@ function hideSecondPage() {
 }
 
 function makingFloors() {
-    let floorInput = document.querySelector('#floorNumber').value;
-    let liftInput = document.querySelector('#liftNumber').value;
-
-    let liftsPerFloor = {};
-    for (let i = 1; i <= floorInput; i++) {
-        liftsPerFloor[i] = 0;
-    }
-
+    let floorInput = parseInt(sessionStorage.getItem("floors"));
+    let liftInput = parseInt(sessionStorage.getItem("lifts"));
+    
     for (let i = floorInput; i > 0; i--) {
         let floordiv = document.createElement('div');
         floordiv.className = 'box';
@@ -93,18 +81,18 @@ function makingFloors() {
         document.querySelector('.secondPage').appendChild(floordiv);
     }
 
+    
     let mainLift = document.createElement('div');
     mainLift.className = 'mainLift';
 
     for (let j = 1; j <= liftInput; j++) {
         let liftdiv = document.createElement('div');
-        liftdiv.className = 'lift';
+        liftdiv.className = 'lift not-moving';
         liftdiv.setAttribute('id', `lift${j}`);
-        liftdiv.setAttribute('flag', `free`);
+        liftdiv.setAttribute('data-current-floor', 1);
 
         let gates = document.createElement('div');
         gates.className = 'gates';
-        gates.setAttribute('id', `gates`);
 
         let gate1 = document.createElement('div');
         gate1.className = 'gate1';
@@ -122,94 +110,81 @@ function makingFloors() {
     const lastbox = mainbuttonlift[mainbuttonlift.length - 1];
     lastbox.appendChild(mainLift);
 
-    let selectAllLift = document.querySelectorAll('.lift');
-    let up = document.querySelectorAll('.up');
-    let down = document.querySelectorAll('.down');
-    let nUp = up.length;
-    let oldFloorValueArray = [];
+    liftLogic();
+}
 
-    for (let i = 0; i < selectAllLift.length; i++) {
-        oldFloorValueArray.push(1);
+function liftLogic() {
+    let liftButtons = document.querySelectorAll(".up, .down");
+    let lifts = document.querySelectorAll(".lift");
+    let buttonQueue = [];
+
+    liftButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            button.disabled = true;
+            let floorNumber = parseInt(button.id.replace(/[^\d]/g, ''));
+            buttonQueue.push({ button, floorNumber });
+
+            if (buttonQueue.length === 1) {
+                getNearestLift(buttonQueue[0]);
+            }
+        });
+    });
+
+    function getNearestLift(request) {
+        let { button, floorNumber } = request;
+        let availableLifts = Array.from(lifts).filter(lift => lift.classList.contains("not-moving"));
+        let minDistance = Infinity;
+        let nearestLift = null;
+
+        availableLifts.forEach(lift => {
+            let currentFloor = parseInt(lift.dataset.currentFloor);
+            let distance = Math.abs(currentFloor - floorNumber);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestLift = lift;
+            }
+        });
+
+        if (nearestLift) {
+            moveLift(nearestLift, floorNumber);
+            buttonQueue.shift();
+            setTimeout(() => {
+                button.disabled = false;
+                if (buttonQueue.length) {
+                    getNearestLift(buttonQueue[0]);
+                }
+            }, minDistance * 2000 + 5500);         }
     }
 
-    up.forEach((e, i) => {
-        e.addEventListener('click', () => {
-            let floorValue = nUp - i;
-            if (liftsPerFloor[floorValue] < 2) {
-                for (let i = 0; i < selectAllLift.length; i++) {
-                    if (selectAllLift[i].getAttribute('flag') === 'free') {
-                        selectAllLift[i].setAttribute('flag', 'busy');
-                        moveLift(selectAllLift[i], floorValue, oldFloorValueArray[i]);
-                        liftsPerFloor[oldFloorValueArray[i]]--;
-                        oldFloorValueArray[i] = floorValue;
-                        liftsPerFloor[floorValue]++; 
-                        break;
-                    }
-                }
-            } else {
-                alert(`Floor ${floorValue} already has 2 lifts. Cannot call more.`);
-            }
-        });
-    });
+    function moveLift(lift, floorNumber) {
+        let currentFloor = parseInt(lift.dataset.currentFloor);
+        lift.classList.remove("not-moving");
+        let translateY = -95 * (floorNumber - 1);
+        lift.style.transform = `translateY(${translateY}px)`;
+        lift.style.transition = `transform ${Math.abs(floorNumber - currentFloor) * 2}s ease`;
 
-    down.forEach((e, i) => {
-        e.addEventListener('click', () => {
-            let floorValue = nUp - i + 1;
-            if (liftsPerFloor[floorValue] < 2) {
-                for (let i = 0; i < selectAllLift.length; i++) {
-                    if (selectAllLift[i].getAttribute('flag') === 'free') {
-                        selectAllLift[i].setAttribute('flag', 'busy');
-                        moveLift(selectAllLift[i], floorValue, oldFloorValueArray[i]);
-                        liftsPerFloor[oldFloorValueArray[i]]--; 
-                        oldFloorValueArray[i] = floorValue;
-                        liftsPerFloor[floorValue]++; 
-                        break;
-                    }
-                }
-            } else {
-                alert(`Floor ${floorValue} already has 2 lifts. Cannot call more.`);
-            }
-        });
-    });
-}
-
-function moveLift(liftno, floorNo, oldFloorValue) {
-    let translation = -95 * (floorNo - 1);
-    liftno.style.transform = `translateY(${translation}px)`;
-
-    let travelTime = `${2 * Math.abs(floorNo - oldFloorValue)}s`;
-    liftno.style.transitionDuration = travelTime;
-
-    setTimeout(() => {
-        gateopenclose(liftno);
         setTimeout(() => {
-            liftno.setAttribute('flag', 'free');
-            liftsPerFloor[floorNo]--; 
-        }, 5500);
-    }, 2 * Math.abs(floorNo - oldFloorValue) * 1000);
-}
+            openCloseDoors(lift);
+            lift.dataset.currentFloor = floorNumber;
+        }, Math.abs(floorNumber - currentFloor) * 2000);
+    }
 
-function gateopenclose(liftno) {
-    let gates = liftno.firstChild;
-    let leftGate = gates.children[0];
-    let rightGate = gates.children[1];
+    function openCloseDoors(lift) {
+        let gates = lift.querySelector('.gates');
+        let leftGate = gates.children[0];
+        let rightGate = gates.children[1];
 
-    setTimeout(() => {
         leftGate.classList.add('left-door--animation');
         rightGate.classList.add('right-door--animation');
-    }, 1000);
 
-    setTimeout(() => {
-        leftGate.classList.remove('left-door--animation');
-        rightGate.classList.remove('right-door--animation');
-    }, 5500);
+        setTimeout(() => {
+            leftGate.classList.remove('left-door--animation');
+            rightGate.classList.remove('right-door--animation');
+            lift.classList.add("not-moving");
+        }, 5500); 
+    }
 }
 
 function deletingFloors() {
-    let floorInput = document.querySelector('#floorNumber').value;
-
-    for (let i = floorInput; i > 0; i--) {
-        let floordiv = document.querySelector('.box');
-        floordiv.remove();
-    }
+    document.querySelectorAll('.box').forEach(box => box.remove());
 }
