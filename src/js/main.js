@@ -10,8 +10,8 @@ simulate.addEventListener('click', () => {
 
     if (floorInputValue == "" || liftInputValue == "") {
         alert('Please enter the value');
-    } else if (floorInputValue < 0 || liftInputValue < 0) {
-        alert("Inputs can't be negative");
+    } else if (floorInputValue <= 0 || liftInputValue <= 0) {
+        alert("Inputs can't be zero or negative");
     } else {
         sessionStorage.setItem("floors", floorInputValue);
         sessionStorage.setItem("lifts", liftInputValue);
