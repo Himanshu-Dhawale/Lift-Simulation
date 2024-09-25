@@ -213,6 +213,7 @@ h2 span {
   .secondPage {
     margin: 0;
     padding-top: 50px;
+    overflow-x: auto;
   }
 
   .mainLift {
