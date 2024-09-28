@@ -1,0 +1,25 @@
+html, body{
+  padding: 0;
+  margin: 0;
+  background-color: beige;
+}
+.liftSim{
+  text-align: center;
+  color: rgb(68, 68, 68);
+}
+.lift {
+  overflow: hidden;
+  position: relative;
+}
+.leftDoor, .rightDoor{
+  background-color: gray;
+  height: 78px;
+  width: 30px;
+  border: 1px solid darkgray;
+}
+.generator{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  padding: 5px;
+}
